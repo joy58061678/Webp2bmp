@@ -1,0 +1,56 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {EB08C4B9-7BC7-4263-908E-C10CD45BE69C} = s 'WebpContextMenu Class'
+		{
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{D7BDA860-7A9A-4589-9A73-7281888B7C34}'
+			Version = s '1.0'
+		}
+	}
+	NoRemove *
+	{
+		NoRemove shellex
+		{
+			NoRemove ContextMenuHandlers
+			{
+				ForceRemove WebpContextMenu = s '{EB08C4B9-7BC7-4263-908E-C10CD45BE69C}'
+			}
+		}
+	}
+}
+
+HKCU
+{
+	NoRemove Software
+	{
+		NoRemove Classes
+		{
+			NoRemove CLSID
+			{
+				ForceRemove {EB08C4B9-7BC7-4263-908E-C10CD45BE69C} = s 'WebpContextMenu Class'
+				{
+					ForceRemove InprocServer32 = s '%MODULE%'
+					{
+						ForceRemove val ThreadingModel = s 'Apartment'
+					}
+				}
+			}
+			NoRemove *
+			{
+				NoRemove shellex
+				{
+					NoRemove ContextMenuHandlers
+					{
+						ForceRemove WebpContextMenu = s '{EB08C4B9-7BC7-4263-908E-C10CD45BE69C}'
+					}
+				}
+			}
+		}
+	}
+}

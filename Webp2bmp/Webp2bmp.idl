@@ -1,0 +1,34 @@
+// Webp2bmp.idl : Webp2bmp 的 IDL 源
+//
+
+// 此文件将由 MIDL 工具处理以
+// 产生类型库(Webp2bmp.tlb)和封送处理代码。
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(6856FD1D-1690-4342-9EF0-83B6E73D6AB1),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IWebpContextMenu : IDispatch{
+};
+[
+	uuid(D7BDA860-7A9A-4589-9A73-7281888B7C34),
+	version(1.0),
+]
+library Webp2bmpLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(EB08C4B9-7BC7-4263-908E-C10CD45BE69C)		
+	]
+	coclass WebpContextMenu
+	{
+		[default] interface IWebpContextMenu;
+	};
+};
+
