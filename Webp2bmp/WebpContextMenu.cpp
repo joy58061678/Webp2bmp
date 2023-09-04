@@ -5,10 +5,6 @@
 #include "PathInfo.h"
 #include <string>
 
-// #pragma comment(lib, "Comctl32.lib")
-// CWebpContextMenu
-
-
 //////////////////////////////////////////////////////////////////////////
 //IShellExtInit
 HRESULT STDMETHODCALLTYPE CWebpContextMenu::Initialize(
@@ -102,23 +98,27 @@ HRESULT STDMETHODCALLTYPE CWebpContextMenu::QueryContextMenu(
 	bRet = InsertMenu(hmenu, indexMenu + uAddCount, MF_SEPARATOR | MF_BYPOSITION, nCmdId++, NULL);//分隔线
 	uAddCount++;
 	//添加按钮
-	bRet = InsertMenu(hmenu, indexMenu + uAddCount, MF_STRING | MF_BYPOSITION, nCmdId++, TEXT("webp转bmp"));
-
+// 	bRet = InsertMenu(hmenu, indexMenu + uAddCount, MF_STRING | MF_BYPOSITION, nCmdId++, TEXT("webp转bmp"));
 	//设置按钮的图标
-//  	HBITMAP hBitmap = LoadBitmap(_AtlBaseModule.GetModuleInstance(), MAKEINTRESOURCE(IDB_BITMAP1));
-	HICON hIcon = (HICON)LoadImage(_AtlBaseModule.GetModuleInstance(), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-	m_hBitmap = IconToBitmap(hIcon);
+// 	HICON hIcon = (HICON)LoadImage(_AtlBaseModule.GetModuleInstance(), MAKEINTRESOURCE(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+// 	m_hBitmap = IconToBitmap(hIcon);
+
+	HMENU hSubMenu = CreatePopupMenu();
+// 	AppendMenu(hSubMenu, MF_STRING, idCmdFirst++, L"转成PNG");
+// 	AppendMenu(hSubMenu, MF_STRING, idCmdFirst++, L"转成BMP");
+
+	InsertMenu(hSubMenu, 0, MF_BYPOSITION | MF_STRING, nCmdId++, TEXT("转成PNG"));
+	bRet = SetMenuItemBitmaps(hSubMenu, 0, MF_BYPOSITION, m_hBitmapPng, m_hBitmapPng);
+	InsertMenu(hSubMenu, 1, MF_BYPOSITION | MF_STRING, nCmdId++, TEXT("转成BMP"));
+	bRet = SetMenuItemBitmaps(hSubMenu, 1, MF_BYPOSITION, m_hBitmapBmp, m_hBitmapBmp);
+
+	InsertMenu(hmenu, indexMenu + uAddCount, MF_BYPOSITION | MF_STRING | MF_POPUP, (UINT_PTR)hSubMenu, TEXT("Webp转换工具"));
 	bRet = SetMenuItemBitmaps(hmenu, indexMenu + uAddCount, MF_BYPOSITION, m_hBitmap, m_hBitmap);
 	uAddCount++;
 
 	bRet = InsertMenu(hmenu, indexMenu + uAddCount, MF_SEPARATOR | MF_BYPOSITION, nCmdId++, NULL);//分隔线
 	uAddCount++;
 
-	if (hIcon != NULL)
-	{
-		DestroyIcon(hIcon);
-		hIcon = NULL;
-	}
 	//最后一个参数为创建的菜单的个数
 	return MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, (ULONG)(uAddCount));
 }
@@ -138,9 +138,16 @@ HRESULT STDMETHODCALLTYPE CWebpContextMenu::InvokeCommand(
 	//检查lpVerb是不是添加的命令,并进行响应
 	switch (LOWORD(pici->lpVerb))//为创建菜单时的indexMenu数值
 	{
-	case 1:
-		hr = OnConvertWebpToBmp();
+	case 1://PNG
+	{
+		hr = OnConvertWebpToPng();
 		break;
+	}
+	case 2://BMP
+	{
+ 		hr = OnConvertWebpToBmp();
+		break;
+	}
 	default:
 		return E_INVALIDARG;
 	}
@@ -169,8 +176,16 @@ HRESULT STDMETHODCALLTYPE CWebpContextMenu::GetCommandString(
 		switch (idCmd)
 		{
 		case 1:
+		{
+
+			szPrompt = TEXT("Help：webp文件转化为png文件。");
+			break;
+		}
+		case 2:
+		{
 			szPrompt = TEXT("Help：webp文件转化为bmp文件。");
 			break;
+		}
 		default:
 			return E_INVALIDARG;
 		}
@@ -179,11 +194,11 @@ HRESULT STDMETHODCALLTYPE CWebpContextMenu::GetCommandString(
 		USES_CONVERSION;
 		if (uType & GCS_UNICODE)
 		{
-			lstrcpynW((LPWSTR)pszName, T2CW(szPrompt), cchMax);
+			lstrcpynW((LPWSTR)pszName, T2CW(szPrompt), cchMax-1);
 		}
 		else
 		{
-			lstrcpynA(pszName, T2CA(szPrompt), cchMax);
+			lstrcpynA(pszName, T2CA(szPrompt), cchMax-1);
 		}
 	}
 	return hr;
@@ -191,14 +206,14 @@ HRESULT STDMETHODCALLTYPE CWebpContextMenu::GetCommandString(
 
 //////////////////////////////////////////////////////////////////////////
 //
-HRESULT CWebpContextMenu::OnConvertWebpToBmp()
+HRESULT CWebpContextMenu::OnConvertWebpToPng()
 {
 	std::wstring strExe = L"";
 	TCHAR szModulePath[MAX_PATH] = { 0 };
 
 	//找到dwebp.exe目录
 	GetModuleFileName(_AtlBaseModule.GetModuleInstance(), szModulePath, MAX_PATH);
-	//lstrcpyn(pszIconFile, szModulePath, cchMax);
+
 	TCHAR* pszFileName = PathFindFileName(szModulePath);
 	//移除文件名，连\\也移除了
 	if (PathRemoveFileSpec(szModulePath))
@@ -214,6 +229,54 @@ HRESULT CWebpContextMenu::OnConvertWebpToBmp()
 	}
 	if (strExe == L"" || PathInfo::FileExists(strExe) == false)
 	{
+		::MessageBox(NULL, TEXT("没有找到dwebp.exe文件！"), TEXT("警告"), MB_OK | MB_SYSTEMMODAL | MB_ICONWARNING);
+		return E_FAIL;
+	}
+
+	for each (std::wstring var in m_vtFilePaths)
+	{
+		//获取文件名
+		std::wstring strFileName = PathInfo::getFileTitle(var);
+		std::wstring strDirectory = PathInfo::GetDirectory(var);
+
+		std::wstring strBmpName = strFileName + TEXT(".png");
+		//重命名文件
+		std::wstring strNewFileName = CreateNewName(strDirectory, strBmpName);
+		if (strNewFileName == L"")
+		{
+			return E_FAIL;
+		}
+		std::wstring strParams = L"\"" + var + L"\"" + L" -o " + L"\"" + strNewFileName + L"\"";//路径加‘’防止空格
+		//调用转换
+		ShellExecute(NULL, NULL, strExe.c_str(), strParams.c_str(), strDirectory.c_str(), SW_HIDE);
+	}
+	return S_OK;
+}
+
+HRESULT CWebpContextMenu::OnConvertWebpToBmp()
+{
+	std::wstring strExe = L"";
+	TCHAR szModulePath[MAX_PATH] = { 0 };
+
+	//找到dwebp.exe目录
+	GetModuleFileName(_AtlBaseModule.GetModuleInstance(), szModulePath, MAX_PATH);
+	//lstrcpyn(pszIconFile, szModulePath, cchMax);
+	TCHAR* pszFileName = PathFindFileName(szModulePath);
+	//移除文件名，连\\也移除了
+	if (PathRemoveFileSpec(szModulePath))
+	{
+		if (wcscmp(pszFileName, TEXT("Webp2bmp64.dll")) == 0)
+			PathRemoveFileSpec(szModulePath);//再移除一层目录
+
+		//拼路径自动增加反斜杠
+		if (PathAppend(szModulePath, TEXT("dwebp.exe")))
+		{
+			strExe = szModulePath;
+		}
+	}
+	if (strExe == L"" || PathInfo::FileExists(strExe) == false)
+	{
+		::MessageBox(NULL, TEXT("没有找到dwebp.exe文件！"), TEXT("警告"), MB_OK | MB_SYSTEMMODAL | MB_ICONWARNING);
 		return E_FAIL;
 	}
 
@@ -231,8 +294,6 @@ HRESULT CWebpContextMenu::OnConvertWebpToBmp()
 			return E_FAIL;
 		}
 		std::wstring strParams = L"\"" + var + L"\"" + L" -bmp -o " + L"\"" + strNewFileName + L"\"";//路径加‘’防止空格
-// 		std::wstring strParams = var + L" -bmp -o " + strNewFileName;//不能加‘’不能加空格
-
 		//调用转换
 		ShellExecute(NULL, NULL, strExe.c_str(), strParams.c_str(), strDirectory.c_str(), SW_HIDE);
 	}

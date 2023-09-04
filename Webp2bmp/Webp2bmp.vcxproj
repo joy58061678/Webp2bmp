@@ -273,9 +273,12 @@
     <Midl Include="Webp2bmp.idl" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Images\Bmp.bmp" />
+    <Image Include="Images\Bmp.ico" />
     <Image Include="Images\Menu.bmp" />
     <Image Include="Images\Menu.ico" />
     <Image Include="Images\Menu.png" />
+    <Image Include="Images\Png.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

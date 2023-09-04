@@ -95,5 +95,14 @@
     <Image Include="Images\Menu.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="Images\Bmp.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Images\Bmp.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Images\Png.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
